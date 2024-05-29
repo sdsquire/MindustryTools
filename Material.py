@@ -2,7 +2,7 @@ from MindustryObject import MindustryObject, Building
 from typing import Optional, List
 
 class Material(MindustryObject):
-    def __init__(self, id: str, name: str, hardness: Optional[int], is_liquid=False, is_natural=False) -> None:
+    def __init__(self, id: str, name: str, hardness: Optional[int]=None, is_liquid=False, is_natural=False) -> None:
         '''
         Represents a mindustry material. Materials include items, liquids, and power.
 

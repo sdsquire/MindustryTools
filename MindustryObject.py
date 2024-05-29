@@ -22,4 +22,3 @@ class Building(MindustryObject):
         super().__init__(id, name)
         self.power = power
         self.size = size
-        self.efficiency = 1.0
