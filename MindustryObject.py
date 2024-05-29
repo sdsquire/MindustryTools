@@ -1,24 +1,32 @@
+from dataclasses import dataclass
+
+@dataclass
 class MindustryObject:
-    def __init__(self, id, name):
-        self.id = id
-        self.name = name
-    
-    def __hash__(self):
-        return self.id
+    '''
+    The base for all mindustry objects.
 
-    def __eq__(self, other):
-        return isinstance(other, MindustryObject) and self.id == other.id
+    Attributes:
+        id (str): The id of the object, as given by the keyboard shortcuts in-game (no leading zeros)
+        name (str): The object name
+    '''
+    id: str
+    name: str
 
-    def __repr__(self):
-        return self.name
-    
+@dataclass
 class Building(MindustryObject):
-    def __init__(self, 
-                id: str,
-                name: str,
-                power: int,
-                size: int, 
-                ):
-        super().__init__(id, name)
-        self.power = power
-        self.size = size
+    '''
+    The base for any Mindustry building. This includes collectors, factories, and power generators.    
+
+    Attributes:
+        power (int): The amount of power the building consumes.
+        size (int): The size of the building, given as the length of one side (all buildings are square).
+    '''
+    power: int
+    size: int 
+
+class MindustryException(Exception):
+    '''
+    An exception thrown when game rules are violated.
+    '''
+    def __init__(self, message):
+        super().__init__(message)

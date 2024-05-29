@@ -1,28 +1,28 @@
 from MindustryObject import MindustryObject, Building
+from dataclasses import dataclass, field
 from typing import Optional, List
 
+@dataclass
 class Material(MindustryObject):
-    def __init__(self, id: str, name: str, hardness: Optional[int]=None, is_liquid=False, is_natural=False) -> None:
-        '''
-        Represents a mindustry material. Materials include items, liquids, and power.
+    '''
+    Represents a mindustry material. Materials include items, liquids, and power.
 
-        Args:
-            id (str): The id of the material.
-            name (str): The name of the material.
-            hardness (Optional[int]): The hardness of the material.
-            is_liquid (bool, optional): Whether the material is a liquid. Defaults to False.
-            is_natural (bool, optional): Whether the material can be found to mine. Defaults to False.
+    Args:
+        id (str): The id of the material.
+        name (str): The name of the material.
+        hardness (Optional[int]): The hardness of the material.
+        is_liquid (bool, optional): Whether the material is a liquid. Defaults to False.
+        is_natural (bool, optional): Whether the material can be found to mine. Defaults to False.
 
-        Other Attributes:
-            sources (List[Building]): The buildings that produce this material.
-            source (Building): The buildling of choice that produces this material. Can be modified.
-        '''
-        super().__init__(id, name)
-        self.hardness = hardness
-        self.is_liquid = is_liquid
-        self.is_natural = is_natural
-        self.sources: List[Building] = []
-        self.source: Building = None
+    Other Attributes:
+        sources (List[Building]): The buildings that produce this material.
+        source (Building): The buildling of choice that produces this material. Can be modified.
+    '''
+    hardness: int = None
+    is_liquid: bool = False
+    is_natural: bool = False
+    sources: List[Building] = field(default_factory=list)
+    source: Building = None
 
     def set_source(self, source: Building) -> None:
         '''
