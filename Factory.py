@@ -1,7 +1,7 @@
 from typing import Dict
 
 from MindustryObject import Building
-from Material import Material
+from Materials import Material
 
 class Factory(Building):
     def __init__(self,
