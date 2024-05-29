@@ -148,23 +148,28 @@ class AirblastDrill(Drill):
     water_intake: int = 3
     water_boost: float = 3.24
 
+#PUMPS
 @dataclass
 class MechanicalPump(Pump):
     id: int = 401
     name: str = 'Mechanical Pump'
     power: int = 0
+    size: int = 1
     base_speed: float = 7.0
 
-# @dataclass
-# class RotaryPump(Pump):
-#     id: int = 402
-#     name:str = 'Rotary Pump'
-#     power: int = -18
-#     base_speed: float = 48.0
+@dataclass
+class RotaryPump(Pump):
+    id: int = 402
+    name:str = 'Rotary Pump'
+    power: int = -18
+    size: int = 2
+    base_speed: float = 12.2
 
-# @dataclass
-# class ImpulsePump(Pump):
-#     id: int = 403
-#     name:str = 'Impulse Pump'
-#     power: int = -78
-#     base_speed: float = 118.8
+@dataclass
+class ImpulsePump(Pump):
+    id: int = 403
+    name: str = 'Impulse Pump'
+    power: int = -78
+    size: int = 3
+    base_speed: float = 13.2
+
