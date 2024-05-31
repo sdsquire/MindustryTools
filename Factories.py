@@ -10,30 +10,19 @@ class Factory(Building):
     A factory building in Mindustry. This includes all buildings that take inputs and produce outputs.
     Note that this includes some things that are not classified as factories in-game, such as power generators and water extractors.
     '''
+    inputs: Dict[M.Material, float] = None
+    outputs: Dict[M.Material, float] = None
     IOMap: Dict[M.Material, float] = None
 
-    def __init__(self,
-        id: int,
-        name: str,
-        power: int,
-        size: int,
-        *,
-        inputs: Optional[Dict[M.Material, float]],
-        outputs: Optional[Dict[M.Material, float]],
-        IOMap: Optional[Dict[M.Material, float]]
-        ):
-        super().__init__(id, name, power, size)
-        if IOMap is not None:
-            if inputs is not None or outputs is not None:
-                raise ValueError('Factory.__init__() must either specify IOMap or specify both inputs and output.')
-            self.IOMap = IOMap
-        else:
-            if inputs is None or outputs is None:
-                raise TypeError(f"Factory.__init__() missing 1 required keyword-only argument: '{'inputs' if inputs is None else 'outputs'}'")
-            self.IOMap = outputs
-            for material, rate in inputs.items():
-                self.IOMap[material] = self.IOMap.get(material, 0) - rate
-        self.IOMap[M.POWER] = power # TODO: Should the user be able to put in the power as an input?
+    def __post_init__(self):
+        if self.IOMap is not None:
+            return
+        if self.inputs is None or self.outputs is None:
+            raise TypeError(f"Factory.__init__() missing 1 required keyword-only argument: '{'inputs' if self.inputs is None else 'outputs'}'")
+        self.IOMap = self.outputs
+        for material, rate in self.inputs.items():
+            self.IOMap[material] = self.IOMap.get(material, 0) - rate
+        self.IOMap[M.POWER] = self.power # TODO: Should the user be able to put in the power as an input?
     
     def __add__(self, other):
         if isinstance(other, Factory):
