@@ -34,6 +34,18 @@ class Material(MindustryObject):
         if source not in self.sources:
             self.sources.append(source)
         self.source = source
+    
+    def __hash__(self):
+        return hash(self.id)
+    
+    def __eq__(self, other):
+        return isinstance(other, Material) and self.id == other.id
+
+    def __str__(self):
+        return self.name
+    
+    def __repr__(self):
+        return self.name
 
 POWER = Material(name='Power', id=0)
 COPPER = Material(name='Copper', id=1, hardness=1, is_natural=True)
