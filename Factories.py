@@ -106,7 +106,30 @@ class Factory(Building):
             return ratio
         raise TypeError(f"unsupported operand type(s) for /: 'Factory' and '{type(other)}'")
 
+class FactoryGroup():
+    'This treats a group of factories as a single entity.'
+    def __init__(self, factories: List[Factory] = None, *, materials: Optional[List[M.Material]] = None):
+        self.factories = dict()
+        self.IOMap = dict()
+        if factories is not None:
+            for factory in factories: # Combine inputs and outputs of all factories
+                self.factories[factory.id] = self.factories.get(factory.id, 0) + 1 # TODO: Remove id and freeze dataclasses
+                for material, rate in factory.outputs.items():
+                    self.IOMap[material] = self.IOMap.get(material, 0) + rate
+                for material, rate in factory.inputs.items():
+                    self.IOMap[material] = self.IOMap.get(material, 0) - rate
+                self.IOMap[M.POWER] = self.IOMap.get(M.POWER, 0) + factory.power
+        if materials is not None:
+            for material in materials:
+                self.IOMap[material] = self.IOMap.get(material, 0) + 1
 
+    def __add__(self, other):
+        if isinstance(other, Factory):
+            return self + FactoryGroup([other])
+        if isinstance(other, M.Material):
+            return
+
+        
 
 
 ### 2. DRILLS ###
