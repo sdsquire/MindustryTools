@@ -3,6 +3,4 @@ import Collectors as C
 import Factories as F
 
 if __name__ == '__main__':
-    print(F.PlastaniumCompressor())
-    print(F.CryofluidMixer())
-    print(F.PlastaniumCompressor() + F.CryofluidMixer())
+    print(F.ImpactReactor() @ F.BlastMixer() @ F.PyratiteMixer() @ F.Cultivator() @ F.CryofluidMixer())

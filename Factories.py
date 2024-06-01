@@ -23,8 +23,12 @@ class Factory(Building):
         for material, rate in self.inputs.items():
             self.IOMap[material] = self.IOMap.get(material, 0) - rate
         self.IOMap[M.POWER] = self.power # TODO: Should the user be able to put in the power as an input?
+
+        for material in self.IOMap:
+            material.sources.append(self)
     
     def __add__(self, other):
+        'Combines the input and output of both factories.'
         if isinstance(other, Factory):
             extra_IO = other.IOMap.copy()
         elif isinstance(other, M.Material):
@@ -38,48 +42,30 @@ class Factory(Building):
 
         combined_IO = self.IOMap.copy()
         for material, rate in extra_IO.items():
-            combined_IO[material] = combined_IO.get(material, 0) + rate
+            combined_IO[material] = round(combined_IO.get(material, 0) + rate, 2)
+            if combined_IO[material] == 0:
+                del combined_IO[material]
 
-            return Factory( # TODO: figure out how to handle ids, names, etc. Maybe a combined class?
-                id = 9999,
-                name = self.name + ' + ' + other.name if isinstance(other, MindustryObject) else self.name + ' + ' + str(other),
-                power = self.power + other.power,
-                size = None,
-                IOMap = combined_IO
-            )
+        return Factory( # TODO: figure out how to handle ids, names, etc. Maybe a combined class?
+            id = 9999,
+            name = self.name + ' + ' + other.name if isinstance(other, MindustryObject) else self.name + ' + ' + str(other),
+            power = self.power + other.power,
+            size = None,
+            IOMap = combined_IO
+        )
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __sub__(self, other):
-        if isinstance(other, Factory):
-            extra_IO = other.IOMap.copy()
-        elif isinstance(other, M.Material):
-            extra_IO = {other: 1}
-        elif isinstance(other, dict):
-            if not all(isinstance(key, M.Material) for key in other):
-                raise TypeError(f"unsupported operand type(s) for +: 'dict' can only be added to 'Factory' if all keys are of type 'Material'")
-            extra_IO = other
-        else:
-            raise TypeError(f"unsupported operand type(s) for +: 'Factory' and '{type(other)}'")
-
-        combined_IO = self.IOMap.copy()
-        for material, rate in extra_IO.items():
-            combined_IO[material] = combined_IO.get(material, 0) - rate
-
-            return Factory( # TODO: figure out how to handle ids, names, etc. Maybe a combined class?
-                id = 9999,
-                name = self.name + ' + ' + other.name if isinstance(other, MindustryObject) else self.name + ' + ' + str(other),
-                power = self.power + other.power,
-                size = None,
-                IOMap = combined_IO
-            )
+        'Removes the inputs and outputs of the other factory from this one.'
+        return self + -1 * other
 
     def __rsub__(self, other):
         return self.__sub__(other)
   
     def __mul__(self, other):
-        if isinstance(other, int):
+        if isinstance(other, int) or isinstance(other, float):
             return Factory(
                 id = self.id,
                 name = self.name,
@@ -95,6 +81,7 @@ class Factory(Building):
         raise TypeError(f"unsupported operand type(s) for *: 'Factory' and '{type(other)}'")
 
     def __matmul__(self, other):
+        'Combines two factories such that the output of one is fully covered by the input of the other.'
         if not isinstance(other, Factory):
             raise TypeError(f"unsupported operand type(s) for @: 'Factory' and '{type(other)}'")
         inputs = {material: -rate for material, rate in self.IOMap.items() if rate < 0}
@@ -105,6 +92,21 @@ class Factory(Building):
         combined = self + other * ratio
         combined.IOMap = {material: rate for material, rate in combined.IOMap.items() if rate != 0}
         return combined
+    
+    def __div__(self, other):
+        'Determines how many of the other factory are needed to keep up with this one. Returns a float.'
+        if isinstance(other, int) or isinstance(other, float):
+            return self * (1 / other)
+        if isinstance(other, Factory):
+            outputs = {material: rate for material, rate in other.IOMap.items() if rate > 0}
+            inputs = {material: -rate for material, rate in self.IOMap.items() if rate < 0}
+            combined_keys = set(inputs.keys()) & set(outputs.keys())
+            ratios = [inputs[key] / outputs[key] for key in combined_keys]
+            ratio = max(ratios)
+            return ratio
+        raise TypeError(f"unsupported operand type(s) for /: 'Factory' and '{type(other)}'")
+
+
 
 
 ### 2. DRILLS ###
