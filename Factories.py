@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Dict, Optional, List
+from typing import Any, Dict, Optional, List
+from math import ceil
 
 from MindustryObject import Building, MindustryObject
 import Materials as M
@@ -12,108 +13,50 @@ class Factory(Building):
     '''
     inputs: Dict[M.Material, float] = None
     outputs: Dict[M.Material, float] = None
-    IOMap: Dict[M.Material, float] = None
 
     def __post_init__(self):
-        if self.IOMap is not None:
-            return
-        if self.inputs is None or self.outputs is None:
-            raise TypeError(f"Factory.__init__() missing 1 required keyword-only argument: '{'inputs' if self.inputs is None else 'outputs'}'")
-        self.IOMap = self.outputs
-        for material, rate in self.inputs.items():
-            self.IOMap[material] = self.IOMap.get(material, 0) - rate
-        self.IOMap[M.POWER] = self.power # TODO: Should the user be able to put in the power as an input?
-
-        for material in self.IOMap:
-            material.sources.append(self)
+        for material in self.outputs:
+            material.set_source(self)
+    
+    def __hash__(self):
+        return self.id
+    
+    def __eq__(self, other):
+        return isinstance(other, Factory) and self.id == other.id
     
     def __add__(self, other):
-        'Combines the input and output of both factories.'
-        if isinstance(other, Factory):
-            extra_IO = other.IOMap.copy()
-        elif isinstance(other, M.Material):
-            extra_IO = {other: 1}
-        elif isinstance(other, dict):
-            if not all(isinstance(key, M.Material) for key in other):
-                raise TypeError(f"unsupported operand type(s) for +: 'dict' can only be added to 'Factory' if all keys are of type 'Material'")
-            extra_IO = other
-        else:
-            raise TypeError(f"unsupported operand type(s) for +: 'Factory' and '{type(other)}'")
-
-        combined_IO = self.IOMap.copy()
-        for material, rate in extra_IO.items():
-            combined_IO[material] = round(combined_IO.get(material, 0) + rate, 2)
-            if combined_IO[material] == 0:
-                del combined_IO[material]
-
-        return Factory( # TODO: figure out how to handle ids, names, etc. Maybe a combined class?
-            id = 9999,
-            name = self.name + ' + ' + other.name if isinstance(other, MindustryObject) else self.name + ' + ' + str(other),
-            power = self.power + other.power,
-            size = None,
-            IOMap = combined_IO
-        )
+        return FactoryGroup([self]).__add__(other)
 
     def __radd__(self, other):
-        return self.__add__(other)
+        return FactoryGroup([self]).__radd__(other)
 
     def __sub__(self, other):
-        'Removes the inputs and outputs of the other factory from this one.'
-        return self + -1 * other
+        return FactoryGroup([self]).__sub__(other)
 
     def __rsub__(self, other):
-        return self.__sub__(other)
+        return FactoryGroup([self]).__rsub__(other)
   
     def __mul__(self, other):
-        if isinstance(other, int) or isinstance(other, float):
-            return Factory(
-                id = self.id,
-                name = self.name,
-                power = self.power * other,
-                size = self.size,
-                IOMap = {material: rate * other for material, rate in self.IOMap.items()}
-            )
-        raise TypeError(f"unsupported operand type(s) for *: 'Factory' and '{type(other)}'")
+        return FactoryGroup([self]).__mul__(other)
         
     def __rmul__(self, other):
-        if isinstance(other, int):
-            return self.__mul__(other)
-        raise TypeError(f"unsupported operand type(s) for *: 'Factory' and '{type(other)}'")
+        return FactoryGroup([self]).__rmul__(other)
 
     def __matmul__(self, other):
-        'Combines two factories such that the output of one is fully covered by the input of the other.'
-        if not isinstance(other, Factory):
-            raise TypeError(f"unsupported operand type(s) for @: 'Factory' and '{type(other)}'")
-        inputs = {material: -rate for material, rate in self.IOMap.items() if rate < 0}
-        outputs = {material: rate for material, rate in other.IOMap.items() if rate > 0}
-        combined_keys = set(inputs.keys()) & set(outputs.keys())
-        ratios = [inputs[key] / outputs[key] for key in combined_keys]
-        ratio = max(ratios)
-        combined = self + other * ratio
-        combined.IOMap = {material: rate for material, rate in combined.IOMap.items() if rate != 0}
-        return combined
+        return FactoryGroup([self]).__matmul__(other)
     
-    def __div__(self, other):
-        'Determines how many of the other factory are needed to keep up with this one. Returns a float.'
-        if isinstance(other, int) or isinstance(other, float):
-            return self * (1 / other)
-        if isinstance(other, Factory):
-            outputs = {material: rate for material, rate in other.IOMap.items() if rate > 0}
-            inputs = {material: -rate for material, rate in self.IOMap.items() if rate < 0}
-            combined_keys = set(inputs.keys()) & set(outputs.keys())
-            ratios = [inputs[key] / outputs[key] for key in combined_keys]
-            ratio = max(ratios)
-            return ratio
-        raise TypeError(f"unsupported operand type(s) for /: 'Factory' and '{type(other)}'")
+    def __truediv__(self, other):
+        return FactoryGroup([self]).__truediv__(other)
 
 class FactoryGroup():
     'This treats a group of factories as a single entity.'
-    def __init__(self, factories: List[Factory] = None, *, materials: Optional[List[M.Material]] = None):
-        self.factories = dict()
-        self.IOMap = dict()
+    def __init__(self, factories: List[Factory] = None, *, rounded = False, materials: Optional[List[M.Material]] = None, factory_group: Optional['FactoryGroup'] = None):
+        self.rounded = rounded
+        self.factories = factory_group.factories.copy() if factory_group is not None else dict()
+        self.IOMap = factory_group.IOMap.copy() if factory_group is not None else dict()
         if factories is not None:
             for factory in factories: # Combine inputs and outputs of all factories
-                self.factories[factory.id] = self.factories.get(factory.id, 0) + 1 # TODO: Remove id and freeze dataclasses
+                self.factories[factory] = self.factories.get(factory, 0) + 1
                 for material, rate in factory.outputs.items():
                     self.IOMap[material] = self.IOMap.get(material, 0) + rate
                 for material, rate in factory.inputs.items():
@@ -123,13 +66,62 @@ class FactoryGroup():
             for material in materials:
                 self.IOMap[material] = self.IOMap.get(material, 0) + 1
 
+    def __repr__(self):
+        return "{\n\tFactories: " + str(self.factories) + ",\n\tInputs & Outputs: " + str(self.IOMap) + "\n}"
+
     def __add__(self, other):
         if isinstance(other, Factory):
-            return self + FactoryGroup([other])
+            return FactoryGroup(factories = [other], factory_group = self)
         if isinstance(other, M.Material):
-            return
-
+            return FactoryGroup(materials = [other], factory_group = self)
+        if isinstance(other, FactoryGroup):
+            result = FactoryGroup(factory_group = self)
+            for factory_id, count in other.factories.items():
+                result.factories[factory_id] = result.factories.get(factory_id, 0) + count
+            for material, rate in other.IOMap.items():
+                result.IOMap[material] = result.IOMap.get(material, 0) + rate
+            return result
+        raise TypeError(f"unsupported operand type(s) for +: 'FactoryGroup' and '{type(other)}'")
+    
+    def __radd__(self, other):
+        return self.__add__(other)
+    
+    def __sub__(self, other):
+        return (-1 * self).__add__(other)
         
+    def __rsub__(self, other):
+        return self.__sub__(other)
+    
+    def __mul__(self, other):
+        if isinstance(other, int) or isinstance(other, float):
+            result = FactoryGroup(factory_group = self)
+            result.factories = {factory_id: count * other for factory_id, count in result.factories.items()}
+            result.IOMap = {material: rate * other for material, rate in result.IOMap.items()}
+            return result
+        raise TypeError(f"unsupported operand type(s) for *: 'FactoryGroup' and '{type(other)}'")
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+    
+    def __matmul__(self, other):
+        return self + (self/other) * other # I'm realizing now that this is awful syntax. 
+
+    def __truediv__(self, other):
+        'Returns the number of "other" factory grroups required to supply this factory group'
+        if isinstance(other, int) or isinstance(other, float):
+            return self.__mul__(1/other)
+        if isinstance(other, Factory):
+            other = FactoryGroup(factories = [other])
+        if isinstance(other, M.Material):
+            other = FactoryGroup(materials = [other])
+        if not isinstance(other, FactoryGroup):
+            raise TypeError(f"unsupported operand type(s) for /: 'FactoryGroup' and '{type(other)}'")
+        
+        inputs = {material: rate for material, rate in self.IOMap.items() if rate < 0}
+        outputs = {material: rate for material, rate in other.IOMap.items() if rate > 0}
+        shared_keys = set(inputs.keys()) & set(outputs.keys())
+        ratio = max(-inputs[material]/outputs[material] for material in shared_keys)
+        return ratio
 
 
 ### 2. DRILLS ###
@@ -419,8 +411,10 @@ class ImpactReactor(Factory):
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     power: int = 7800
 
-FACTORIES = [
+FACTORIES = {
+    factory.id: factory for factory in [
     WaterExtractor, Cultivator, OilExtractor,
     GraphitePress, MultiPress, SiliconSmelter, SiliconCrucible, Kiln, PlastaniumCompressor, PhaseWeaver, SurgeSmelter, CryofluidMixer, PyratiteMixer, BlastMixer, Melter, SporePress, Pulverizer, CoalCentrifuge,
     CombustionGenerator, ThermalGenerator, SteamGenerator, DifferentailGenerator, RTGGenerator, SolarPanel, LargeSolarPanel, ThoriumReactor, ImpactReactor,
-]
+    ]
+}

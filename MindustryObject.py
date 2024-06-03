@@ -24,6 +24,9 @@ class Building(MindustryObject):
     power: int
     size: int 
 
+    def __hash__(self):
+        return self.id
+
 class MindustryException(Exception):
     '''
     An exception thrown when game rules are violated.
