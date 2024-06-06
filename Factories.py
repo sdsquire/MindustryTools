@@ -13,13 +13,21 @@ class Factory(Building):
     '''
     inputs: Dict[M.Material, float] = None
     outputs: Dict[M.Material, float] = None
+    efficiency: float = 1.0
 
     def __post_init__(self):
-        for material in self.outputs:
+        self.power = self.power * self.efficiency
+        self.inputs =  {material: self.efficiency * rate for material, rate in self.inputs.items()}
+        for material, rate in self.outputs.items():
+            self.outputs[material] = self.efficiency * rate
             material.set_source(self)
-    
+        
     def __hash__(self):
         return self.id
+    
+    def __eq__(self, other):
+        if isinstance(other, Factory):
+            return self.id == other.id
     
     def __eq__(self, other):
         return isinstance(other, Factory) and self.id == other.id
@@ -67,7 +75,7 @@ class FactoryGroup():
                 self.IOMap[material] = self.IOMap.get(material, 0) + 1
 
     def __repr__(self):
-        return "{\n\tFactories: " + str(self.factories) + ",\n\tInputs & Outputs: " + str(self.IOMap) + "\n}"
+        return "{\n\tFactories: " + ", ".join([f'{factory.name}: {count}' for factory, count in self.factories.items()]) + ",\n\tInputs & Outputs: " + str(self.IOMap) + "\n}"
 
     def __add__(self, other):
         if isinstance(other, Factory):
@@ -80,6 +88,8 @@ class FactoryGroup():
                 result.factories[factory_id] = result.factories.get(factory_id, 0) + count
             for material, rate in other.IOMap.items():
                 result.IOMap[material] = result.IOMap.get(material, 0) + rate
+                if result.IOMap[material] == 0:
+                    del result.IOMap[material]
             return result
         raise TypeError(f"unsupported operand type(s) for +: 'FactoryGroup' and '{type(other)}'")
     
@@ -123,6 +133,12 @@ class FactoryGroup():
         ratio = max(-inputs[material]/outputs[material] for material in shared_keys)
         return ratio
 
+    def get_inputs(self):
+        return {material: rate for material, rate in self.IOMap.items() if rate < 0}
+    
+    def get_outputs(self):
+        return {material: rate for material, rate in self.IOMap.items() if rate > 0}
+
 
 ### 2. DRILLS ###
 # I know these are resources gathering, but they function much more like factories than drills
@@ -134,6 +150,8 @@ class WaterExtractor(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=dict)
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.WATER: 6.6})
     power: int = -90
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class Cultivator(Factory):
@@ -143,6 +161,8 @@ class Cultivator(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.WATER: 18})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SPORE_POD: .6})
     power: int = -80
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class OilExtractor(Factory):
@@ -152,6 +172,8 @@ class OilExtractor(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SAND:1, M.WATER: 9})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.OIL: 15})
     power: int = -180
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 
 ### 7. FACTORIES ###
@@ -163,6 +185,8 @@ class GraphitePress(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.COAL: 1.33})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.GRAPHITE: .66})
     power: int = 0
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class MultiPress(Factory):
@@ -172,6 +196,8 @@ class MultiPress(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.COAL: 6, M.WATER: 6})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.GRAPHITE: 4})
     power: int = -108
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class SiliconSmelter(Factory):
@@ -181,6 +207,8 @@ class SiliconSmelter(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.COAL: 1.5, M.SAND: 3})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SILICON: 1.5})
     power: int = -30
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class SiliconCrucible(Factory):
@@ -190,6 +218,8 @@ class SiliconCrucible(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.COAL: 2.66, M.SAND: 4, M.PYRATITE: 0.66})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SILICON: 5.33})
     power: int = -240
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class Kiln(Factory):
@@ -199,6 +229,8 @@ class Kiln(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.LEAD: 2, M.SAND: 2})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.METAGLASS: 2})
     power: int = -36
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class PlastaniumCompressor(Factory):
@@ -208,6 +240,8 @@ class PlastaniumCompressor(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.TITANIUM: 2, M.OIL: 15})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.PLASTANIUM: 1})
     power: int = -180
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class PhaseWeaver(Factory):
@@ -217,6 +251,8 @@ class PhaseWeaver(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.THORIUM: 2, M.SAND: 5})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.PHASE_FABRIC: 0.5})
     power: int = -300
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class SurgeSmelter(Factory):
@@ -226,6 +262,8 @@ class SurgeSmelter(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.COPPER: 2.4, M.LEAD: 3.2, M.SILICON: 2.4, M.TITANIUM: 1.6})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SURGE_ALLOY: 0.8})
     power: int = -240
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class CryofluidMixer(Factory):
@@ -235,6 +273,8 @@ class CryofluidMixer(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.WATER: 12, M.TITANIUM: .5})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.CRYOFLUID: 12})
     power: int = -60
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class PyratiteMixer(Factory):
@@ -244,6 +284,8 @@ class PyratiteMixer(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.COAL: .75, M.LEAD: 1.5, M.SAND: 1.5})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.PYRATITE: .75})
     power: int = -12
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class BlastMixer(Factory):
@@ -253,6 +295,8 @@ class BlastMixer(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.PYRATITE: .75, M.SPORE_POD: .75})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.BLAST_COMPOUND: .75})
     power: int = -24
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class Melter(Factory):
@@ -262,6 +306,8 @@ class Melter(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SCRAP: 6 })
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SLAG: 12})
     power: int = -60
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 # TODO: implement these
 # @dataclass
@@ -298,6 +344,8 @@ class SporePress(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SPORE_POD: 3})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.OIL: 18})
     power: int = -42
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class Pulverizer(Factory):
@@ -307,6 +355,8 @@ class Pulverizer(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SCRAP: 1.5})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SLAG: 1.5})
     power: int = -30
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class CoalCentrifuge(Factory):
@@ -316,6 +366,8 @@ class CoalCentrifuge(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.OIL: 6})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.COAL: 2})
     power: int = -42
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 # TODO: I haven't figured out optional inputs yet
 # @dataclass
@@ -338,6 +390,8 @@ class CombustionGenerator(Factory):
     inputs: Dict[M.Material, float] = {M.COAL: .5},  #TODO: I haven't figured out optional inputs yet
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     power: int = 60
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class ThermalGenerator(Factory):
@@ -347,6 +401,8 @@ class ThermalGenerator(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.WATER: 1})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     power: int = 60
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class SteamGenerator(Factory):
@@ -356,6 +412,8 @@ class SteamGenerator(Factory):
     inputs: Dict[M.Material, float] = field(default_factory={M.COAL: 1/1.5, M.WATER: 6}) # TODO: I haven't figured out optional inputs yet
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     power: int = 330
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class DifferentailGenerator(Factory):
@@ -365,6 +423,8 @@ class DifferentailGenerator(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.PYRATITE: 1/3.66, M.CRYOFLUID: 6})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     power: int = 1080
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class RTGGenerator(Factory):
@@ -374,6 +434,8 @@ class RTGGenerator(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.THORIUM: 1/14})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     power: int = 270
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class SolarPanel(Factory):
@@ -383,6 +445,8 @@ class SolarPanel(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     power: int = 6
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class LargeSolarPanel(Factory):
@@ -392,6 +456,8 @@ class LargeSolarPanel(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     power: int = 78
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class ThoriumReactor(Factory):
@@ -401,6 +467,8 @@ class ThoriumReactor(Factory):
     inputs: Dict[M.Material, float] = {M.THORIUM: 1/6, M.CRYOFLUID: 2.5}, # Should be 2.4, but did this for safety!
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     power: int = 900
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 @dataclass
 class ImpactReactor(Factory):
@@ -410,6 +478,8 @@ class ImpactReactor(Factory):
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.BLAST_COMPOUND: 1/2.33, M.CRYOFLUID: 15})
     outputs: Dict[M.Material, float] = field(default_factory=lambda: {})
     power: int = 7800
+    __hash__ = Factory.__hash__
+    __eq__ = Factory.__eq__
 
 FACTORIES = {
     factory.id: factory for factory in [
