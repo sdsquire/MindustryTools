@@ -24,16 +24,16 @@ class Material(MindustryObject):
     sources: List[Building] = field(default_factory=list)
     source: Building = None
 
-    def set_source(self, source: Building) -> None:
-        '''
-        Set the preferred source of the material.
+    # def set_source(self, source: Building) -> None:
+    #     '''
+    #     Set the preferred source of the material.
 
-        Args:
-            source (Building): The building that produces the material.
-        '''
-        if source not in self.sources:
-            self.sources.append(source)
-        self.source = source
+    #     Args:
+    #         source (Building): The building that produces the material.
+    #     '''
+    #     if source not in self.sources:
+    #         self.sources.append(source)
+    #     self.source = source
     
     def __hash__(self):
         return hash(self.id)
