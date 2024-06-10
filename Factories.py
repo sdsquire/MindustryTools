@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, List
+from typing import Dict, Optional, List, Self
 from math import ceil
 
 from MindustryObject import Building, MindustryException
@@ -14,7 +14,7 @@ class Factory(Building):
 
     Factories can be used with mathematical operations, which always result in a FactoryGroup. As such, see the FactoryGroup class for documentation on each operation.
 
-    Args:
+    Attributes:
         name (str): The name of the factory.
         id (int): The ID of the factory.
         size (int): The size of the factory.
@@ -40,10 +40,6 @@ class Factory(Building):
         
     def __hash__(self):
         return self.id
-    
-    def __eq__(self, other):
-        if isinstance(other, Factory):
-            return self.id == other.id
     
     def __eq__(self, other):
         return isinstance(other, Factory) and self.id == other.id
@@ -292,7 +288,7 @@ class Pulverizer(Factory):
     id: int = 716
     size: int = 1
     inputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SCRAP: 1.5})
-    outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SLAG: 1.5})
+    outputs: Dict[M.Material, float] = field(default_factory=lambda: {M.SAND: 1.5})
     power: int = -30
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
@@ -459,6 +455,7 @@ class FactoryGroup():
     FUNCTIONS:
 
     OPERATORS:
+        These operations were inspired by visualizing the factory groups as a matrix, where the factories are the columns and the materials are the rows. The IOMap is the matrix product of the factories and the factories are the matrix product of the IOMap. This is not a perfect analogy, but it helps to understand the operations.
         ADDITION (+): FactoryGroup, Factory, Material
             Combines two factory groups by adding all elements together.
             Can also be used to add a factory or material to a factory group. This is done by converting them to factory groups.
@@ -473,7 +470,7 @@ class FactoryGroup():
         MATRIX MULTIPLICATION (@): Factory, FactoryGroup
             Combines two factories / factory groups. The second entity is scaled such that its output material rate matches the first entity's input rate for the corresponding material. If there are no shared materials, the entities are added together.
         
-        DIVISION (/):
+        DIVISION (/): FactoryGroup, Factory, Material
             If "other" is a FactoryGroup, returns the number of "other" factory groups required to supply this factory group. Dividing factories with no shared inputs/outputs will result in an error. If "other" is a number, scales the factory group by that amount (equivalent to multiplying by 1/other).
     '''
     def __init__(self, factories: Dict[Factory, float] | List[Factory]= None, *,  materials: Optional[Dict[M.Material, float]] | List[M.Material] = None, factory_group: Optional['FactoryGroup'] = None):
@@ -550,13 +547,13 @@ class FactoryGroup():
         The second entity is scaled such that its output material rate matches the first entity's input rate for the corresponding material.
         If there are multiple shared materials, the second entity is scaled by the largest ratio (to ensure all materials are supplied).
 
-        If there are no shared materials, the entities are added together.
+        If there are no shared materials, the second entity is ignored.
         '''
-        if isinstance(other, Factory):
+        if isinstance(other, Factory) or isinstance(other, FactoryGroup):
             try:
-                return self + (self/other) * other # This is some amazing syntax haha... Elegant, but might be too weird
+                return self + (self/other) * other # Can't tell if this is elegant or a stupid idea
             except MindustryException:
-                return self + other
+                return self
         raise TypeError(f"unsupported operand type(s) for @: 'FactoryGroup' and '{type(other)}'")
 
     def __rmatmul__(self, other):
@@ -584,9 +581,18 @@ class FactoryGroup():
         outputs = {material: rate for material, rate in other.IOMap.items() if rate > 0}
         shared_keys = set(inputs.keys()) & set(outputs.keys())
         if not shared_keys:
-            raise MindustryException(f"Cannot divide entity 1 by entity 2; entity 1 produces none of entity 2's inputs.")
+            raise MindustryException(f"Cannot divide {self} by {other}; entity 1 produces none of entity 2's inputs.")
         ratio = max(-inputs[material]/outputs[material] for material in shared_keys)
         return ratio
+    
+    def __floordiv__(self, other):
+        '''
+        Returns the number of "other" factory groups required to supply this factory group.
+        Dividing factories with no shared inputs/outputs will result in an error.
+        Rounds up to the nearest whole number.
+        '''
+        ratio = self.__truediv__(other)
+        return ceil(ratio) # Yes, I know that floor division should round down, but this is by far the most useful behavior
     
     def get_inputs(self):
         return {material: rate for material, rate in self.IOMap.items() if rate < 0}
@@ -594,3 +600,40 @@ class FactoryGroup():
     def get_outputs(self):
         return {material: rate for material, rate in self.IOMap.items() if rate > 0}
 
+    def get_upstream(self, sources: Optional[Dict[M.Material, Factory | C.Collector]] = None, rounded: bool | List[Factory] = False) -> Self:
+        '''
+        Adds factories to the group until all inputs are satisfied.
+        Ignores natural materials by default, but can be overridden by including them in the sources argument.
+
+        Args:
+            sources (Dict[M.Material, Factory | Collector]): A dictionary of materials and their sources. If a material is not included, the most advanced factory that produces that material is used.
+            rounded (bool | list): Whether to round the output rates to the nearest whole number. Defaults to False. If a list is provided, it will round only the selected factories.
+
+        Returns:
+            A factory group with all inputs satisfied.
+        '''
+        result = FactoryGroup(factory_group = self)
+        sources = sources if sources is not None else {}
+        rounded = [] if not rounded else rounded
+
+        # filter = lambda material: result.IOMap.get(material, 0) < -0.001 in sources or not material.is_natural
+
+        while target_materials := [material for material, rate in result.IOMap.items() if rate < 0.001 and (material in sources or not material.is_natural)]:
+            material = target_materials.pop()
+            if material in sources:
+                source = sources[material]
+            elif material in SOURCES:
+                source = SOURCES[material][-1] # Default to the most advanced source
+            else:
+                raise MindustryException(f"No source found for {material.name}") # This should never happen
+            
+            if source not in rounded:
+                result @= source
+            else:
+                try:
+                    ratio = ceil(result / source)
+                    result += ratio * source
+                except MindustryException:
+                    continue
+        
+        return result
