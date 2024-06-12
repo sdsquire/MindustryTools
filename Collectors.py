@@ -4,7 +4,7 @@ from typing import Optional
 from MindustryObject import Building, MindustryException
 import Materials as M
 
-@dataclass
+@dataclass(frozen=True)
 class Collector(Building):
     '''
     Represents a mindustry collector. Collectors gateher resources from the environment, and have no required inputs except power.
@@ -49,7 +49,7 @@ class Collector(Building):
         return target_rate / self.get_speed(material, tiles=1)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Drill(Collector):
     '''
     Represents a mindustry drill. Drills are collectors that gather materials from ore deposits.
@@ -91,7 +91,7 @@ class Drill(Collector):
         return (60 / (self.base_speed + (50 * material.hardness))) * tiles * (self.water_boost if self.boosted else 1)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Pump(Collector):
     def get_speed(self, material=M.WATER, tiles: Optional[int]=None) -> float:
         '''
@@ -107,7 +107,7 @@ class Pump(Collector):
     
 
 # DRILLS
-@dataclass
+@dataclass(frozen=True)
 class MechanicalDrill(Drill):
     id: int = 201
     name: str = 'Mechanical Drill'
@@ -117,7 +117,7 @@ class MechanicalDrill(Drill):
     base_speed: float = 600.0
     water_intake: float = 3.0
 
-@dataclass
+@dataclass(frozen=True)
 class PneumaticDrill(Drill):
     id: int = 202
     name: str = 'Pneumatic Drill'
@@ -127,7 +127,7 @@ class PneumaticDrill(Drill):
     base_speed: float = 400.0
     water_intake: float = 3.6
 
-@dataclass
+@dataclass(frozen=True)
 class LaserDrill(Drill):
     id: int = 203
     name: str = 'Laser Drill'
@@ -137,7 +137,7 @@ class LaserDrill(Drill):
     base_speed: float = 280.0
     water_intake: float = 4.8
 
-@dataclass
+@dataclass(frozen=True)
 class AirblastDrill(Drill):
     id: int = 204
     name: str = 'Airblast Drill'
@@ -149,7 +149,7 @@ class AirblastDrill(Drill):
     water_boost: float = 3.24
 
 #PUMPS
-@dataclass
+@dataclass(frozen=True)
 class MechanicalPump(Pump):
     id: int = 401
     name: str = 'Mechanical Pump'
@@ -157,7 +157,7 @@ class MechanicalPump(Pump):
     size: int = 1
     base_speed: float = 7.0
 
-@dataclass
+@dataclass(frozen=True)
 class RotaryPump(Pump):
     id: int = 402
     name:str = 'Rotary Pump'
@@ -165,7 +165,7 @@ class RotaryPump(Pump):
     size: int = 2
     base_speed: float = 12.2
 
-@dataclass
+@dataclass(frozen=True)
 class ImpulsePump(Pump):
     id: int = 403
     name: str = 'Impulse Pump'

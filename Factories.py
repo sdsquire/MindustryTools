@@ -4,9 +4,8 @@ from math import ceil
 
 from MindustryObject import Building, MindustryException
 import Materials as M
-import Collectors as C
 
-@dataclass
+@dataclass(frozen=True)
 class Factory(Building):
     '''
     A factory building in Mindustry. This includes all buildings that take inputs and produce outputs.
@@ -29,14 +28,20 @@ class Factory(Building):
     efficiency: float = 1.0
     modal_efficiency: bool = False
 
+    # def __new__(cls, *args, **kwargs):
+    #     instance = super().__new__(cls)
+    #     efficiency = kwargs.get('efficiency', 1.0)
+
+    #     inputs =  {material: efficiency * rate for material, rate in kwargs.get('inputs', {}).items()}
+    #     outputs = {material: efficiency * rate for material, rate in kwargs.get('outputs', {}).items()}
+
+    #     instance.__dict__.update({'inputs': inputs, 'outputs': outputs})
+
+    #     return instance
+
     def __post_init__(self):
-        if not self.modal_efficiency and self.efficiency != 1.0:
-            raise ValueError(f"{self.name} has no options for efficiency (must be 1.0)")
-        self.inputs =  {material: self.efficiency * rate for material, rate in self.inputs.items()}
-        self.outputs =  {material: self.efficiency * rate for material, rate in self.outputs.items()}
-        # for material, rate in self.outputs.items():
-        #     self.outputs[material] = self.efficiency * rate
-        #     material.set_source(self)
+        object.__setattr__(self, 'inputs', {material: self.efficiency * rate for material, rate in self.inputs.items()})
+        object.__setattr__(self, 'outputs', {material: self.efficiency * rate for material, rate in self.outputs.items()})
         
     def __hash__(self):
         return self.id
@@ -71,7 +76,7 @@ class Factory(Building):
 
 ### 2. DRILLS ###
 # I know these are resources gathering, but they function much more like factories than drills
-@dataclass
+@dataclass(frozen=True)
 class WaterExtractor(Factory):
     name: str = 'Water Extractor'
     id: int = 205
@@ -83,7 +88,7 @@ class WaterExtractor(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class Cultivator(Factory):
     name: str = 'Cultivator'
     id: int = 206
@@ -95,7 +100,7 @@ class Cultivator(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class OilExtractor(Factory):
     name: str = 'Oil Extractor'
     id: int = 207
@@ -109,7 +114,7 @@ class OilExtractor(Factory):
 
 
 ### 7. FACTORIES ###
-@dataclass
+@dataclass(frozen=True)
 class GraphitePress(Factory):
     name: str = 'Graphite Press'
     id: int = 701
@@ -120,7 +125,7 @@ class GraphitePress(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class MultiPress(Factory):
     name: str = 'Multi Press'
     id: int = 702
@@ -131,7 +136,7 @@ class MultiPress(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class SiliconSmelter(Factory):
     name: str = 'Silicon Smelter'
     id: int = 703
@@ -142,7 +147,7 @@ class SiliconSmelter(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class SiliconCrucible(Factory):
     name: str = 'Silicon Crucible'
     id: int = 704
@@ -154,7 +159,7 @@ class SiliconCrucible(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class Kiln(Factory):
     name: str = 'Kiln'
     id: int = 705
@@ -165,7 +170,7 @@ class Kiln(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class PlastaniumCompressor(Factory):
     name: str = 'Plastanium Compressor'
     id: int = 706
@@ -176,7 +181,7 @@ class PlastaniumCompressor(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class PhaseWeaver(Factory):
     name: str = 'Phase Weaver'
     id: int = 707
@@ -187,7 +192,7 @@ class PhaseWeaver(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class SurgeSmelter(Factory):
     name: str = 'Surge Smelter'
     id: int = 708
@@ -198,7 +203,7 @@ class SurgeSmelter(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class CryofluidMixer(Factory):
     name: str = 'Cryofluid Mixer'
     id: int = 709
@@ -209,7 +214,7 @@ class CryofluidMixer(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class PyratiteMixer(Factory):
     name: str = 'Pyratite Mixer'
     id: int = 710
@@ -220,7 +225,7 @@ class PyratiteMixer(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class BlastMixer(Factory):
     name: str = 'Blast Mixer'
     id: int = 711
@@ -231,7 +236,7 @@ class BlastMixer(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class Melter(Factory):
     name: str = 'Melter'
     id: int = 712
@@ -243,7 +248,7 @@ class Melter(Factory):
     __eq__ = Factory.__eq__
 
 # TODO: implement these
-@dataclass
+@dataclass(frozen=True)
 class Separator(Factory):
     name: str = 'Separator'
     id: int = 713
@@ -257,7 +262,7 @@ class Separator(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class Dissassembler(Factory):
     name: str = 'Dissassembler'
     id: int = 714
@@ -271,7 +276,7 @@ class Dissassembler(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class SporePress(Factory):
     name: str = 'Spore Press'
     id: int = 715
@@ -282,7 +287,7 @@ class SporePress(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class Pulverizer(Factory):
     name: str = 'Pulverizer'
     id: int = 716
@@ -293,7 +298,7 @@ class Pulverizer(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class CoalCentrifuge(Factory):
     name: str = 'Coal Centrifuge'
     id: int = 717
@@ -305,7 +310,7 @@ class CoalCentrifuge(Factory):
     __eq__ = Factory.__eq__
 
 # TODO: I haven't figured out optional inputs yet
-# @dataclass
+# @dataclass(frozen=True)
 # class Incinerator(Factory):
 #     name: str = 'Incinerator'
 #     id: int = 718
@@ -317,7 +322,7 @@ class CoalCentrifuge(Factory):
 
 ### 5. GENERATORS ###
 
-@dataclass
+@dataclass(frozen=True)
 class CombustionGenerator(Factory):
     name: str = 'Combustion Generator'
     id: int = 507
@@ -328,7 +333,7 @@ class CombustionGenerator(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class ThermalGenerator(Factory):
     name: str = 'Thermal Generator'
     id: int = 508
@@ -340,7 +345,7 @@ class ThermalGenerator(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class SteamGenerator(Factory):
     name: str = 'Steam Generator'
     id: int = 509
@@ -351,7 +356,7 @@ class SteamGenerator(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class DifferentailGenerator(Factory):
     name: str = 'Differentail Generator'
     id: int = 510
@@ -362,7 +367,7 @@ class DifferentailGenerator(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class RTGGenerator(Factory):
     name: str = 'RTG Generator'
     id: int = 511
@@ -373,7 +378,7 @@ class RTGGenerator(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class SolarPanel(Factory):
     name: str = 'Solar Panel'
     id: int = 512
@@ -384,7 +389,7 @@ class SolarPanel(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class LargeSolarPanel(Factory):
     name: str = 'Large Solar Panel'
     id: int = 513
@@ -395,7 +400,7 @@ class LargeSolarPanel(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class ThoriumReactor(Factory):
     name: str = 'Thorium Reactor'
     id: int = 514
@@ -406,7 +411,7 @@ class ThoriumReactor(Factory):
     __hash__ = Factory.__hash__
     __eq__ = Factory.__eq__
 
-@dataclass
+@dataclass(frozen=True)
 class ImpactReactor(Factory):
     name: str = 'Impact Reactor'
     id: int = 515
@@ -498,8 +503,6 @@ class FactoryGroup():
         output = '{'
         if self.factories:
             output += '\n   FACTORIES: [' + ', '.join(f'{factory.name}: {round(count,2)}' for factory, count in self.factories.items()) + ']'
-        # if self.resources:
-            # output += '\n   RESOURCES: [' + ', '.join(f'{material.name} tiles: {round(count,2)}' for material, count in self.resources.items()) + ']'
         if self.IOMap:
             output += '\n   INPUT / OUTPUT: [' + ', '.join(f'{material.name}: {round(rate,2)}' for material, rate in self.IOMap.items()) + ']'
         return output + '\n}' if output != '{' else '{}'
@@ -600,7 +603,7 @@ class FactoryGroup():
     def get_outputs(self):
         return {material: rate for material, rate in self.IOMap.items() if rate > 0}
 
-    def get_upstream(self, sources: Optional[Dict[M.Material, Factory | C.Collector]] = None, rounded: bool | List[Factory] = False) -> Self:
+    def get_upstream(self, sources: Optional[Dict[M.Material, Factory]] = None, rounded: bool | List[Factory] = False) -> Self:
         '''
         Adds factories to the group until all inputs are satisfied.
         Ignores natural materials by default, but can be overridden by including them in the sources argument.
@@ -627,13 +630,13 @@ class FactoryGroup():
             else:
                 raise MindustryException(f"No source found for {material.name}") # This should never happen
             
-            if source not in rounded:
-                result @= source
-            else:
+            if rounded is True or source in rounded:
                 try:
                     ratio = ceil(result / source)
                     result += ratio * source
                 except MindustryException:
                     continue
+            else:
+                result @= source
         
         return result

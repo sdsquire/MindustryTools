@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-@dataclass
+@dataclass(frozen=True)
 class MindustryObject:
     '''
     The base for all mindustry objects.
@@ -12,7 +12,7 @@ class MindustryObject:
     id: str
     name: str
 
-@dataclass
+@dataclass(frozen=True)
 class Building(MindustryObject):
     '''
     The base for any Mindustry building. This includes collectors, factories, and power generators.    
