@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 from typing import Dict, Optional, List, Self
 from math import ceil
 
-from MindustryObject import Building, MindustryException
-import Materials as M
+from MindustryTools.MindustryObject import Building, MindustryException
+import MindustryTools.Materials as M
 
 @dataclass(frozen=True)
 class Factory(Building):

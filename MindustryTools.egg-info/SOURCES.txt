@@ -1,0 +1,13 @@
+LICENSE
+MANIFEST.in
+README.md
+setup.py
+MindustryTools/Collectors.py
+MindustryTools/Factories.py
+MindustryTools/Materials.py
+MindustryTools/MindustryObject.py
+MindustryTools/__init__.py
+MindustryTools.egg-info/PKG-INFO
+MindustryTools.egg-info/SOURCES.txt
+MindustryTools.egg-info/dependency_links.txt
+MindustryTools.egg-info/top_level.txt

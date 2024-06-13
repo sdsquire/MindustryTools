@@ -1,6 +1,7 @@
-from MindustryObject import MindustryObject, Building
 from dataclasses import dataclass, field
 from typing import List
+
+from .MindustryObject import MindustryObject, Building
 
 @dataclass(frozen=True)
 class Material(MindustryObject):

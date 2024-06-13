@@ -23,8 +23,5 @@ homemade = coal_supply | all_scrap
 
 if __name__ == '__main__':
     
-    # print(SiliconCrucible(efficiency=2.00))
-    # print(ImpactReactor() @ BlastMixer() @ CryofluidMixer() @ PyratiteMixer() @ Cultivator())
-    print(FactoryGroup(materials={SURGE_ALLOY: -30}).get_upstream(rounded=[ImpactReactor()]))
+    print(FactoryGroup(factories={SurgeSmelter(): 12}, materials={POWER:100000}).get_upstream())
     print()
-    # print(FactoryGroup(materials={BLAST_COMPOUND: -20}).get_upstream(rounded=True))

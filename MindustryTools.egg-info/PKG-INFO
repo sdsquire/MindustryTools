@@ -1,3 +1,19 @@
+Metadata-Version: 2.1
+Name: MindustryTools
+Version: 0.1a1
+Summary: A series of tools for the game Mindustry, by Anuke.
+Home-page: https://github.com/sdsquire/MindustryTools
+Author: Samuel Squires
+Author-email: sdsquires@gmail.com
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Fans
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
 # Mindustry Tools
 ## Overview
 

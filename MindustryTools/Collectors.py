@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from MindustryObject import Building, MindustryException
-import Materials as M
+from MindustryTools.MindustryObject import Building, MindustryException
+from MindustryTools.Materials import Material
 
 @dataclass(frozen=True)
 class Collector(Building):
@@ -19,7 +19,7 @@ class Collector(Building):
     '''
     base_speed: float
 
-    def get_speed(self, material: M.Material, tiles: Optional[int]=None) -> float:
+    def get_speed(self, material: Material, tiles: Optional[int]=None) -> float:
         '''
         Get the speed of the collector.
 
@@ -36,7 +36,7 @@ class Collector(Building):
             tiles = self.size**2
         return self.base_speed * tiles
 
-    def required_tiles(self, material: M.Material, target_rate: float) -> float:
+    def required_tiles(self, material: Material, target_rate: float) -> float:
         '''
         Get the number of tiles required to achieve a target collection rate.
 
@@ -71,11 +71,6 @@ class Drill(Collector):
     boost_multiplier: float = 2.56
     boosted: bool = False
 
-    # def __post_init__(self):
-        # for material in M.MATERIALS:
-        #     if material.hardness is not None and material.hardness <= self.max_hardness:
-        #         material.set_source(self)
-
     def get_speed(self, material, tiles=None) -> float:
         '''
         Get the speed of the drill.
@@ -93,7 +88,7 @@ class Drill(Collector):
 
 @dataclass(frozen=True)
 class Pump(Collector):
-    def get_speed(self, material=M.WATER, tiles: Optional[int]=None) -> float:
+    def get_speed(self, material, tiles: Optional[int]=None) -> float:
         '''
         Get the speed of the pump.
 
